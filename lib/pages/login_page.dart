@@ -10,12 +10,13 @@ class LoginPage extends StatelessWidget {
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),  // Add padding to avoid content being too close to the edges
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 50),
+                
                 // Extropian Header Text
                 Image.asset(
                   'lib/images/logo_white_no_brain.png',
@@ -80,7 +81,7 @@ class LoginPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 32),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
-                      side: BorderSide(color: Color(0xFFD8A42D)), // Add a gold outline
+                      side: BorderSide(color: Color(0xFFD8A42D)),
                     ),
                   ),
                   child: const Text(
