@@ -11,3 +11,7 @@
     - flutter analyze
     - flutter test
 5. Update this README file with any instructions relevant to future collaborators
+
+### Other Useful Commands
+- flutter emulators: Gives a list of the emulators available on your machine
+- flutter emulators --launch <emulator id>: Launch the emulator that contains <emulator id>
