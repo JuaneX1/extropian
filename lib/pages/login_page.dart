@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../components/my_button.dart';
+import '../components/my_textfield.dart';
+import '../components/square_frame.dart';
+
 class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+  LoginPage({super.key});
+
+  // Controllers for text fields
+  final usernameController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  // Sign in function
+  void signUserIn(){}
 
   @override
   Widget build(BuildContext context) {
@@ -15,124 +26,100 @@ class LoginPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 50),
-                
+      
                 // Extropian Header Text
-                Image.asset(
-                  'lib/images/logo_white_no_brain.png',
-                  height: 200,
-                ),
-                const SizedBox(height: 20),
-
-                // Extropian Header Text
-                Image.asset(
-                  'lib/images/extropian_brain.png',
-                  height: 100,
-                ),
-                const SizedBox(height: 20),
-
-                // Welcome Back text
-                const Text(
-                  "Welcome Back!",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Username text field
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Username',
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Password text field
-                TextField(
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    hintText: 'Password',
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Sign in button
-                ElevatedButton(
-                  onPressed: () {
-                    // Add sign-in functionality here
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 32),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                      side: BorderSide(color: Color(0xFFD8A42D)),
-                    ),
-                  ),
-                  child: const Text(
-                    'Sign In',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white, // Ensure the text color is white for contrast
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // "Or continue with" Text
-                const Text(
-                  "or continue with",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white70,
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Social Login Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Google Sign-In Button
-                    GestureDetector(
-                      onTap: () {
-                        // Add Google sign-in functionality
-                      },
-                      child: Image.asset(
-                        'lib/images/google_icon.png', 
-                        height: 40,
-                      ),
+                    Image.asset(
+                      'lib/images/logo_white_no_brain.png',
+                      height: 200,
+                      
+                    ),
+
+                    // Extropian Brain Logo
+                    Image.asset(
+                      'lib/images/extropian_brain.png',
+                      height: 100,
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
 
-                // "Need an account? Sign up" text
-                TextButton(
-                  onPressed: () {
-                    // Add navigation to sign up page here
-                  },
-                  child: const Text(
-                    "Need an account? Sign up",
-                    style: TextStyle(
-                      color: Colors.white,
-                    ),
+                const SizedBox(height: 20),
+                
+                // Username text field
+                MyTextField(controller: usernameController, hintText: "Username or email", obscureText: false),
+                const SizedBox(height: 15),
+
+                // Password text field
+                MyTextField(controller: passwordController, hintText: "Password", obscureText: true),
+
+                // Forgot Password
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text( 'Forgot Password?',
+                      style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ],
                   ),
+                ),
+
+                // Sign in button
+                const SizedBox(height: 50),
+                MyButton(onTap: signUserIn),
+
+                // "Or continue with" Text
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          color: Colors.grey[400],
+                          thickness: 0.5,
+                        ),
+                      ),
+                  
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10.0),
+                        child: Text(
+                          'Or continue with',
+                          style: TextStyle(color: Colors.white),
+                          ),
+                      ),
+                  
+                      const Expanded(
+                        child: Divider(
+                          color: Colors.white,
+                          thickness: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Google Logo
+                const SizedBox(height: 20),
+                const SquareFrame(imagePath: 'lib/images/google_icon.png'),
+                const SizedBox(height: 25),
+                // "Need an account? Sign up" text
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Not a member? ',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    Text(
+                      'Register now',
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                    
+                  ],
                 ),
               ],
             ),
