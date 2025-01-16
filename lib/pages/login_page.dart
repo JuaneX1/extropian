@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../components/my_button.dart';
 import '../components/my_textfield.dart';
 import '../components/square_frame.dart';
+import 'register_page.dart'; // Import RegisterPage
 
 class LoginPage extends StatelessWidget {
   LoginPage({super.key});
@@ -12,7 +13,14 @@ class LoginPage extends StatelessWidget {
   final passwordController = TextEditingController();
 
   // Sign in function
-  void signUserIn(){}
+  void signUserIn() {
+    // BACKEND TEAM: Add your login API call here
+    // Example: Call your backend service to authenticate the user
+    // Use the following data from text controllers:
+    // usernameController.text, passwordController.text
+    
+    print("Sign-In triggered");
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +42,6 @@ class LoginPage extends StatelessWidget {
                     Image.asset(
                       'lib/images/logo_white_no_brain.png',
                       height: 200,
-                      
                     ),
 
                     // Extropian Brain Logo
@@ -54,71 +61,38 @@ class LoginPage extends StatelessWidget {
                 // Password text field
                 MyTextField(controller: passwordController, hintText: "Password", obscureText: true),
 
-                // Forgot Password
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text( 'Forgot Password?',
-                      style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                ),
-
                 // Sign in button
                 const SizedBox(height: 50),
                 MyButton(onTap: signUserIn),
-
-                // "Or continue with" Text
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: Colors.grey[400],
-                          thickness: 0.5,
-                        ),
-                      ),
-                  
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10.0),
-                        child: Text(
-                          'Or continue with',
-                          style: TextStyle(color: Colors.white),
-                          ),
-                      ),
-                  
-                      const Expanded(
-                        child: Divider(
-                          color: Colors.white,
-                          thickness: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
 
                 // Google Logo
                 const SizedBox(height: 20),
                 const SquareFrame(imagePath: 'lib/images/google_icon.png'),
                 const SizedBox(height: 25),
+
                 // "Need an account? Sign up" text
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    const Text(
                       'Not a member? ',
                       style: TextStyle(color: Colors.white),
                     ),
-                    Text(
-                      'Register now',
-                      style: TextStyle(color: Colors.blue),
+                    GestureDetector(
+                      onTap: () {
+                        // Navigate to RegisterPage
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RegisterPage(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Register now',
+                        style: TextStyle(color: Colors.blue),
+                      ),
                     ),
-                    
                   ],
                 ),
               ],

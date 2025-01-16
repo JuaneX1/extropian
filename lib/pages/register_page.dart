@@ -13,7 +13,13 @@ class RegisterPage extends StatelessWidget {
 
   // Register function
   void registerUser() {
-    // Add registration logic here
+    // BACKEND TEAM: Add your registration API call here
+    // Example: Call your backend service to create a new user
+    // Use the following data from text controllers:
+    // usernameController.text, emailController.text,
+    // passwordController.text, confirmPasswordController.text
+    
+    print("Register triggered");
   }
 
   @override
@@ -21,97 +27,75 @@ class RegisterPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Extropian Header Text
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Image.asset(
-                      'lib/images/logo_white_no_brain.png',
-                      height: 200,
-                    ),
+        child: SingleChildScrollView( // Add scrolling behavior
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
 
-                    Image.asset(
-                      'lib/images/extropian_brain.png',
-                      height: 100,
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // Create Your Account Header
-                const Text(
-                  'Create Your Account',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Username text field
-                MyTextField(
-                  controller: usernameController,
-                  hintText: "Username",
-                  obscureText: false,
-                ),
-                const SizedBox(height: 15),
-
-                // Email text field
-                MyTextField(
-                  controller: emailController,
-                  hintText: "Email",
-                  obscureText: false,
-                ),
-                const SizedBox(height: 15),
-
-                // Password text field
-                MyTextField(
-                  controller: passwordController,
-                  hintText: "Password",
-                  obscureText: true,
-                ),
-                const SizedBox(height: 15),
-
-                // Confirm Password text field
-                MyTextField(
-                  controller: confirmPasswordController,
-                  hintText: "Confirm Password",
-                  obscureText: true,
-                ),
-
-                const SizedBox(height: 50),
-
-                // Register button
-                MyButton(onTap: registerUser, text: "Register"),
-
-                const SizedBox(height: 20),
-
-                // "Already have an account? Log in" text
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Already have an account? ',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context); // Navigate back to login page
-                      },
-                      child: const Text(
-                        'Log in',
-                        style: TextStyle(color: Colors.blue),
+                  // Extropian Header Text
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        'lib/images/logo_white_no_brain.png',
+                        height: 200,
                       ),
-                    ),
-                  ],
-                ),
-              ],
+
+                      // Extropian Brain Logo
+                      Image.asset(
+                        'lib/images/extropian_brain.png',
+                        height: 100,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Username text field
+                  MyTextField(controller: usernameController, hintText: "Username", obscureText: false),
+                  const SizedBox(height: 15),
+
+                  // Email text field
+                  MyTextField(controller: emailController, hintText: "Email", obscureText: false),
+                  const SizedBox(height: 15),
+
+                  // Password text field
+                  MyTextField(controller: passwordController, hintText: "Password", obscureText: true),
+                  const SizedBox(height: 15),
+
+                  // Confirm Password text field
+                  MyTextField(controller: confirmPasswordController, hintText: "Confirm Password", obscureText: true),
+
+                  // Register button
+                  const SizedBox(height: 50),
+                  MyButton(onTap: registerUser),
+
+                  // "Already have an account? Login here" text
+                  const SizedBox(height: 25),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Already have an account? ',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text(
+                          'Login here',
+                          style: TextStyle(color: Colors.blue),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
