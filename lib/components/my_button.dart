@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 
 class MyButton extends StatelessWidget {
-
   final Function()? onTap;
-  const MyButton({super.key, required this.onTap});
+  final String text; // Add a text parameter for the button label
+
+  const MyButton({
+    super.key,
+    required this.onTap,
+    required this.text, 
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        // Add your navigation or functionality here
-        print("Button Pressed");
-      },
-      
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(20),
         margin: const EdgeInsets.symmetric(horizontal: 25),
@@ -27,10 +28,10 @@ class MyButton extends StatelessWidget {
             ),
           ],
         ),
-        child: const Center(
+        child: Center(
           child: Text(
-            "Sign In",
-            style: TextStyle(
+            text, // Use the custom text here
+            style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold, // Bold text
               fontSize: 16,

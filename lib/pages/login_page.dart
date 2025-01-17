@@ -4,6 +4,7 @@ import '../components/my_button.dart';
 import '../components/my_textfield.dart';
 import '../components/square_frame.dart';
 import 'register_page.dart'; // Import RegisterPage
+import 'forgot_password_page.dart'; // Import ForgotPasswordPage
 
 class LoginPage extends StatelessWidget {
   LoginPage({super.key});
@@ -15,11 +16,7 @@ class LoginPage extends StatelessWidget {
   // Sign in function
   void signUserIn() {
     // BACKEND TEAM: Add your login API call here
-    // Example: Call your backend service to authenticate the user
-    // Use the following data from text controllers:
-    // usernameController.text, passwordController.text
-    
-    print("Sign-In triggered");
+    print("Sign-In triggered for: ${usernameController.text}");
   }
 
   @override
@@ -61,9 +58,35 @@ class LoginPage extends StatelessWidget {
                 // Password text field
                 MyTextField(controller: passwordController, hintText: "Password", obscureText: true),
 
+                // Forgot Password
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          // Navigate to ForgotPasswordPage
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => ForgotPasswordPage()),
+                          );
+                        },
+                        child: const Text(
+                          'Forgot Password?',
+                          style: TextStyle(color: Colors.blue),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
                 // Sign in button
                 const SizedBox(height: 50),
-                MyButton(onTap: signUserIn),
+                MyButton(
+                  onTap: signUserIn,
+                  text: "Sign In", 
+                ),
 
                 // Google Logo
                 const SizedBox(height: 20),
