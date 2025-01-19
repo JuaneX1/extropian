@@ -18,7 +18,7 @@ class RegisterPage extends StatelessWidget {
     // Use the following data from text controllers:
     // usernameController.text, emailController.text,
     // passwordController.text, confirmPasswordController.text
-    
+
     print("Register triggered");
   }
 
@@ -72,7 +72,10 @@ class RegisterPage extends StatelessWidget {
 
                   // Register button
                   const SizedBox(height: 50),
-                  MyButton(onTap: registerUser),
+                  MyButton(
+                    onTap: registerUser,
+                    text: "Register", 
+                  ),
 
                   // "Already have an account? Login here" text
                   const SizedBox(height: 25),
