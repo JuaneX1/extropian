@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "911713877672",
+    "project_id": "ucfproject-3d077",
+    "storage_bucket": "ucfproject-3d077.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:911713877672:android:2b3b0e2d4be729b1b20c9d",
+        "android_client_info": {
+          "package_name": "com.example.extropian"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwFH1Ztj70gNtt-7YLL5W_gAuMsc_rH1U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:911713877672:android:5e31c0891b409ea5b20c9d",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwFH1Ztj70gNtt-7YLL5W_gAuMsc_rH1U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
