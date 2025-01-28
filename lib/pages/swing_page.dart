@@ -52,7 +52,7 @@ class _SwingPageState extends State<SwingPage> {
 
     try {
       // Get the current date and time
-      String currentDateTime = DateFormat('yyyy-MM-dd_HH:mm:ss').format(DateTime.now());
+      String currentDateTime = DateFormat('MMMM d, yyyy h:mm a').format(DateTime.now());
 
       // Reference to the new collection for the selected club and current date
       var dateDocRef = _firestore
