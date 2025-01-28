@@ -1,11 +1,10 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:extropian/components/my_textfield.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:extropian/auth/auth_service.dart';
 import 'package:extropian/auth/register_page.dart';
-import 'package:extropian/auth/forgot_password_page.dart'; 
+import 'package:extropian/auth/forgot_password_page.dart';
 import 'package:extropian/pages/home_page.dart';
 import 'package:extropian/components/my_button.dart';
 
@@ -18,7 +17,6 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _auth = AuthService();
-
   final _email = TextEditingController();
   final _password = TextEditingController();
 
@@ -29,6 +27,38 @@ class _LoginPageState extends State<LoginPage> {
     _password.dispose();
   }
 
+  // Method to handle user login
+  _login() async {
+    try {
+      // Attempt to login with email and password
+      final user = await _auth.loginUserWithEmailAndPassword(
+          _email.text, _password.text);
+
+      if (user != null) {
+        // Check if the user's email is verified
+        if (!user.emailVerified) {
+          // If not verified, show an alert and return
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Please verify your email before logging in."),
+            ),
+          );
+          // Optionally, you could also send the user an email verification reminder
+          await user.sendEmailVerification();
+          return;
+        }
+
+        log("User Logged In");
+        goToHome(context); // Proceed to Home if email is verified
+      }
+    } catch (e) {
+      log("Login failed: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Login failed: $e")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,7 +66,7 @@ class _LoginPageState extends State<LoginPage> {
         color: Colors.black, // Set the background color to black
         child: SafeArea(
           child: Center(
-            child: SingleChildScrollView( // Add SingleChildScrollView here
+            child: SingleChildScrollView(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -49,11 +79,11 @@ class _LoginPageState extends State<LoginPage> {
                       height: 100,
                     ),
                   ),
-                  const SizedBox(height: 25), // space between images
+                  const SizedBox(height: 25),
 
                   // Second image (below Extropian logo)
                   Image.asset(
-                    'lib/images/extropian_brain.png', // path to your second image
+                    'lib/images/extropian_brain.png',
                     height: 150,
                   ),
 
@@ -94,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         GestureDetector(
-                          onTap: () => goToForgotPassword(context), // Navigate to Forgot Password
+                          onTap: () => goToForgotPassword(context),
                           child: Text(
                             'Forgot Password?',
                             style: GoogleFonts.tomorrow(
@@ -108,9 +138,10 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 25),
 
+                  // Sign In Button
                   MyButton(
-                    onTap: _login, // Call signUserIn with context
-                    text: "Sign In", // Pass the text for the button
+                    onTap: _login, // Call _login when button is tapped
+                    text: "Sign In",
                   ),
 
                   const SizedBox(height: 50),
@@ -156,21 +187,11 @@ class _LoginPageState extends State<LoginPage> {
 
   goToHome(BuildContext context) => Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) =>  HomePage()),
+        MaterialPageRoute(builder: (context) => HomePage()),
       );
 
   goToForgotPassword(BuildContext context) => Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => ForgotPasswordPage()), // Navigate to ForgotPasswordPage
+        MaterialPageRoute(builder: (context) => ForgotPasswordPage()),
       );
-
-  _login() async {
-    final user =
-        await _auth.loginUserWithEmailAndPassword(_email.text, _password.text);
-
-    if (user != null) {
-      log("User Logged In");
-      goToHome(context);
-    }
-  }
 }
