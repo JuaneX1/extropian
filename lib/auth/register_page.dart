@@ -42,6 +42,11 @@ class RegisterPage extends StatelessWidget {
         await FirebaseFirestore.instance.collection('users').doc(uid).set({
           'name': nameController.text.trim(),
           'email': emailController.text.trim(),
+          'age': 0,
+          'height': 0,
+          'weight': 0,
+          'body_fat': 0,
+          'bmi': 0,
           'createdAt': DateTime.now(),
         });
 
