@@ -1,6 +1,6 @@
 # extropian
 
-A new Flutter project. Make sure to use the folder with the project insided is names extropian.
+This is our Senior Design Project
 
 ## Getting Started
 
