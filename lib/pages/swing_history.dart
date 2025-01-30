@@ -135,31 +135,40 @@ class _ClubSessionsScreenState extends State<ClubSessionsScreen> {
   }
 
   Future<void> _fetchAllSwings() async {
-    final User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+  final User? user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
 
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    final sessions = await firestore
-        .collection('users_swings')
-        .doc(user.uid)
-        .collection(widget.clubName)
-        .get();
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final sessions = await firestore
+      .collection('users_swings')
+      .doc(user.uid)
+      .collection(widget.clubName)
+      .get();
 
-    List<Map<String, dynamic>> fetchedSwings = [];
+  List<QueryDocumentSnapshot> sessionDocs = sessions.docs;
 
-    for (var session in sessions.docs) {
-      final sessionSwings = await session.reference.collection('swings').get();
-      for (var swing in sessionSwings.docs) {
-        fetchedSwings.add(swing.data());
-      }
+  // Sort sessions by date (oldest first)
+  sessionDocs.sort((a, b) {
+    DateTime dateA = _parseDate(a.id);
+    DateTime dateB = _parseDate(b.id);
+    return dateA.compareTo(dateB); // Ascending order (oldest first)
+  });
+
+  List<Map<String, dynamic>> fetchedSwings = [];
+
+  for (var session in sessionDocs) {
+    final sessionSwings = await session.reference.collection('swings').get();
+    for (var swing in sessionSwings.docs) {
+      fetchedSwings.add(swing.data());
     }
-
-    setState(() {
-      swings = fetchedSwings;
-      _updateChartData();
-      isLoading = false;
-    });
   }
+
+  setState(() {
+    swings = fetchedSwings;
+    _updateChartData();
+    isLoading = false;
+  });
+}
 
   void _updateChartData() {
     chartData = swings.asMap().entries.map((entry) {
