@@ -160,7 +160,7 @@ class _ProfilePageState extends State<ProfilePage> {
           // Extract user info from Firestore
           final String userName = userData['name'] ?? 'Guest';
           final String userEmail = userData['email'] ?? 'No Email Provided';
-          final double age = userData['age'] ?? 0;
+          final int age = (userData['age'] ?? 0).floor();
           final double height = (userData['height'] ?? 0).toDouble();
           final double weight = (userData['weight'] ?? 0).toDouble();
           final double bodyFat = (userData['body_fat'] ?? 0).toDouble();
