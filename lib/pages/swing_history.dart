@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 import 'package:extropian/pages/swing_history_session.dart';
 
@@ -365,8 +366,27 @@ class _ClubSessionsScreenState extends State<ClubSessionsScreen> {
         .collection(widget.clubName)
         .get();
 
-    return sessions.docs;
+    List<QueryDocumentSnapshot> sessionDocs = sessions.docs;
+
+    // Sorting sessions by date (most recent first)
+    sessionDocs.sort((a, b) {
+      DateTime dateA = _parseDate(a.id);
+      DateTime dateB = _parseDate(b.id);
+      return dateA.compareTo(dateB); // Descending order (newest first)
+    });
+
+    return sessionDocs;
   }
+
+  // Function to parse date strings like "January 23, 2025 6:05 PM"
+  DateTime _parseDate(String dateString) {
+    try {
+      return DateTime.parse(dateString); // If stored in ISO 8601 format
+    } catch (_) {
+      return DateFormat("MMMM d, yyyy h:mm a").parse(dateString);
+    }
+  }
+
 }
 
 
