@@ -27,7 +27,7 @@ class _HomePageState extends State<HomePage> {
       _selectedIndex = index;
     });
 
-    // Navigation based on selected index
+      // Navigation based on selected index
     if (index == 1) {
       Navigator.push(
         context,
@@ -38,7 +38,12 @@ class _HomePageState extends State<HomePage> {
         context,
         MaterialPageRoute(builder: (context) => const SwingPage()),
       );
-    } else if (index == 4) { // Profile page now in index 4 where settings used to be
+    } else if (index == 3) { 
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SwingHistory()), 
+      );
+    } else if (index == 4) { 
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const ProfilePage()),
