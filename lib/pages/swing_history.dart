@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 import 'package:extropian/pages/swing_history_session.dart';
 
@@ -134,31 +135,40 @@ class _ClubSessionsScreenState extends State<ClubSessionsScreen> {
   }
 
   Future<void> _fetchAllSwings() async {
-    final User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+  final User? user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
 
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    final sessions = await firestore
-        .collection('users_swings')
-        .doc(user.uid)
-        .collection(widget.clubName)
-        .get();
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final sessions = await firestore
+      .collection('users_swings')
+      .doc(user.uid)
+      .collection(widget.clubName)
+      .get();
 
-    List<Map<String, dynamic>> fetchedSwings = [];
+  List<QueryDocumentSnapshot> sessionDocs = sessions.docs;
 
-    for (var session in sessions.docs) {
-      final sessionSwings = await session.reference.collection('swings').get();
-      for (var swing in sessionSwings.docs) {
-        fetchedSwings.add(swing.data());
-      }
+  // Sort sessions by date (oldest first)
+  sessionDocs.sort((a, b) {
+    DateTime dateA = _parseDate(a.id);
+    DateTime dateB = _parseDate(b.id);
+    return dateA.compareTo(dateB); // Ascending order (oldest first)
+  });
+
+  List<Map<String, dynamic>> fetchedSwings = [];
+
+  for (var session in sessionDocs) {
+    final sessionSwings = await session.reference.collection('swings').get();
+    for (var swing in sessionSwings.docs) {
+      fetchedSwings.add(swing.data());
     }
-
-    setState(() {
-      swings = fetchedSwings;
-      _updateChartData();
-      isLoading = false;
-    });
   }
+
+  setState(() {
+    swings = fetchedSwings;
+    _updateChartData();
+    isLoading = false;
+  });
+}
 
   void _updateChartData() {
     chartData = swings.asMap().entries.map((entry) {
@@ -365,8 +375,27 @@ class _ClubSessionsScreenState extends State<ClubSessionsScreen> {
         .collection(widget.clubName)
         .get();
 
-    return sessions.docs;
+    List<QueryDocumentSnapshot> sessionDocs = sessions.docs;
+
+    // Sorting sessions by date (most recent first)
+    sessionDocs.sort((a, b) {
+      DateTime dateA = _parseDate(a.id);
+      DateTime dateB = _parseDate(b.id);
+      return dateA.compareTo(dateB); // Descending order (newest first)
+    });
+
+    return sessionDocs;
   }
+
+  // Function to parse date strings like "January 23, 2025 6:05 PM"
+  DateTime _parseDate(String dateString) {
+    try {
+      return DateTime.parse(dateString); // If stored in ISO 8601 format
+    } catch (_) {
+      return DateFormat("MMMM d, yyyy h:mm a").parse(dateString);
+    }
+  }
+
 }
 
 
