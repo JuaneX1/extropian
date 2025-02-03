@@ -38,6 +38,11 @@ class _HomePageState extends State<HomePage> {
         context,
         MaterialPageRoute(builder: (context) => const SwingPage()),
       );
+    } else if (index == 4) { // Profile page now in index 4 where settings used to be
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfilePage()),
+      );
     }
   }
 
@@ -69,20 +74,15 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   // Header Section
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.center, // Centers the row items
                     children: [
-                      Image.asset(
-                        'lib/images/extropian_whitenobrain.png', // Path to your logo
-                        height: 40,
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const ProfilePage()),
-                          );
-                        },
-                        child: const Icon(Icons.person, color: Colors.white, size: 28), // Profile button
+                      Expanded(
+                        child: Center(
+                          child: Image.asset(
+                            'lib/images/extropian_whitenobrain.png',
+                            height: 40,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -278,9 +278,9 @@ class _HomePageState extends State<HomePage> {
               icon: Icon(Icons.timeline_outlined),
               label: 'Activity',
             ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: 'Settings',
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
             ),
           ],
         ),
