@@ -8,6 +8,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'package:extropian/components/info_popup.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -25,7 +27,7 @@ class _HomePageState extends State<HomePage> {
       _selectedIndex = index;
     });
 
-    // Navigation based on selected index
+      // Navigation based on selected index
     if (index == 1) {
       Navigator.push(
         context,
@@ -35,6 +37,16 @@ class _HomePageState extends State<HomePage> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const SwingPage()),
+      );
+    } else if (index == 3) { 
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SwingHistory()), 
+      );
+    } else if (index == 4) { 
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfilePage()),
       );
     }
   }
@@ -67,20 +79,15 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   // Header Section
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.center, // Centers the row items
                     children: [
-                      Image.asset(
-                        'lib/images/extropian_whitenobrain.png', // Path to your logo
-                        height: 40,
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const ProfilePage()),
-                          );
-                        },
-                        child: const Icon(Icons.person, color: Colors.white, size: 28), // Profile button
+                      Expanded(
+                        child: Center(
+                          child: Image.asset(
+                            'lib/images/extropian_whitenobrain.png',
+                            height: 40,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -201,22 +208,22 @@ class _HomePageState extends State<HomePage> {
 
                   // Health Metrics Grid
                   Expanded(
-                    child: GridView.count(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
-                      children: [
-                        _buildMetricCard('RHR (Morning)', '60.8 bpm', '+ Good < 65.1'),
-                        _buildMetricCard('HRV (Morning)', '50.0 ms', '+ Good > 38.8'),
-                        _buildMetricCard('RHR (Nighttime)', '57.5 bpm', '+ Good < 57.6'),
-                        _buildMetricCard('HRV (Nighttime)', '46.9 ms', 'Normal 43.9 to 52.2'),
-                        _buildMetricCard('Sleep Duration', '8 h 47 min', ''),
-                        _buildMetricCard('Average HR', '57.8 bpm', ''),
-                        _buildMetricCard('Calories Burned', '924 kcal', ''),
-                        _buildMetricCard('Total Steps', '304 steps', ''),
-                      ],
-                    ),
-                  ),
+                  child: GridView.count(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  children: [
+                   _buildMetricCard(context, 'RHR (Morning)', '60.8 bpm', '+ Good < 65.1', 'Resting Heart Rate measures heart beats per minute while at rest.'),
+                   _buildMetricCard(context, 'HRV (Morning)', '50.0 ms', '+ Good > 38.8', 'Heart Rate Variability measures the time variation between heartbeats.'),
+                   _buildMetricCard(context, 'RHR (Nighttime)', '57.5 bpm', '+ Good < 57.6', 'Resting Heart Rate during nighttime sleep.'),
+                   _buildMetricCard(context, 'HRV (Nighttime)', '46.9 ms', 'Normal 43.9 to 52.2', 'Heart Rate Variability during nighttime sleep.'),
+                   _buildMetricCard(context, 'Sleep Duration', '8 h 47 min', '', 'Total duration of sleep recorded during the night.'),
+                   _buildMetricCard(context, 'Average HR', '57.8 bpm', '', 'Average heart rate calculated throughout the day.'),
+                   _buildMetricCard(context, 'Calories Burned', '924 kcal', '', 'Estimated calories burned based on activity and heart rate.'),
+                   _buildMetricCard(context, 'Total Steps', '304 steps', '', 'Total number of steps taken throughout the day.'),
+                ],
+              ),
+            ),
                 ],
               ),
             );
@@ -276,9 +283,9 @@ class _HomePageState extends State<HomePage> {
               icon: Icon(Icons.timeline_outlined),
               label: 'Activity',
             ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: 'Settings',
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
             ),
           ],
         ),
@@ -286,36 +293,44 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Method to build individual metric card
-  Widget _buildMetricCard(String title, String value, String status) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[850],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.tomorrow(color: Colors.white70, fontSize: 16),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.tomorrow(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          if (status.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                status,
-                style: GoogleFonts.tomorrow(color: Colors.greenAccent, fontSize: 14),
-              ),
+Widget _buildMetricCard(BuildContext context, String title, String value, String status, String description) {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.grey[850],
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: GoogleFonts.tomorrow(color: Colors.white70, fontSize: 16),
             ),
-        ],
-      ),
-    );
-  }
+            GestureDetector(
+              onTap: () => displayInfoPopup(context, title, description),
+              child: const Icon(Icons.info_outline, color: Colors.white70, size: 20),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: GoogleFonts.tomorrow(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+        if (status.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              status,
+              style: GoogleFonts.tomorrow(color: Colors.greenAccent, fontSize: 14),
+            ),
+          ),
+      ],
+    ),
+  );
+ }
 }
