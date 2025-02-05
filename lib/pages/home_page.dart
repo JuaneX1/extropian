@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage> {
     } else if (index == 2) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const SwingPage()),
+        MaterialPageRoute(builder: (context) => SwingPage()),
       );
     } else if (index == 3) { 
       Navigator.push(
@@ -136,7 +136,7 @@ class _HomePageState extends State<HomePage> {
                                 onPressed: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => const SwingPage()),
+                                    MaterialPageRoute(builder: (context) => SwingPage()),
                                   );
                                 },
                                 icon: const Icon(Icons.sports_golf_rounded, color: Colors.white),
