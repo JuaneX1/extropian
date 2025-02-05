@@ -3,86 +3,72 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
-
-// import 'package:google_fonts/google_fonts.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class SwingPage extends StatefulWidget {
-  const SwingPage({super.key});
-
   @override
-  State<SwingPage> createState() => _SwingPageState();
+  _SwingPageState createState() => _SwingPageState();
 }
 
 class _SwingPageState extends State<SwingPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final User? _user = FirebaseAuth.instance.currentUser;
 
-  // Selected golf club for the dropdown
-  String? _selectedClub;
+  String? selectedClub;
+  bool isPractice = true;
 
-  // List of golf clubs
-  final List<String> _golfClubs = [
-    'Driver',
-    '3 Wood',
-    '3 Iron',
-    '4 Iron',
-    '5 Iron',
-    '6 Iron',
-    '7 Iron',
-    '8 Iron',
-    '9 Iron',
-    'Pitching Wedge',
-    'Sand Wedge',
-    '60 Degree'
-  ];
+  final Map<String, String> clubMapping = {
+    'D': 'Driver',
+    '3W': '3 Wood',
+    '3I': '3 Iron',
+    '4I': '4 Iron',
+    '5I': '5 Iron',
+    '6I': '6 Iron',
+    '7I': '7 Iron',
+    '8I': '8 Iron',
+    '9I': '9 Iron',
+    'PW': 'Pitching Wedge',
+    'SW': 'Sand Wedge',
+    '60Â°': '60 Degree'
+  };
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  // Function to save the selected club, create a date collection, and add swings
   Future<void> _saveSelectedClub() async {
-    if (_selectedClub == null) {
+    if (selectedClub == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a golf club')),
       );
       return;
     }
 
-    try {
-      // Get the current date and time
-      String currentDateTime = DateFormat('MMMM d, yyyy h:mm a').format(DateTime.now());
+    String fullClubName = clubMapping[selectedClub] ?? selectedClub!;
 
-      // Reference to the new collection for the selected club and current date
+    try {
+      String currentDateTime = DateFormat('MMMM d, yyyy h:mm a').format(DateTime.now());
       var dateDocRef = _firestore
-          .collection('users_swings') // Main collection
-          .doc(_user?.uid) // Document for the specific user
-          .collection(_selectedClub!) // Collection named after the selected club
+          .collection('users_swings')
+          .doc(_user?.uid)
+          .collection(fullClubName)
           .doc(currentDateTime);
 
-      // Generate random swings data
       Random random = Random();
-      int swingCount = random.nextInt(10) + 1; // Random number between 1 and 10
+      int swingCount = random.nextInt(10) + 1;
 
-      // Create total swings doc
       await dateDocRef.set({'totalSwings': swingCount});
 
       for (int i = 1; i <= swingCount; i++) {
-        // Add a swing document to the swings collection with custom ID
         await dateDocRef.collection('swings').doc(i.toString()).set({
-          'wrist_speed': random.nextDouble() * 150, // Random speed between 0 and 150
-          'club_head_speed': random.nextDouble() * 150, 
+          'wrist_speed': random.nextDouble() * 150,
+          'club_head_speed': random.nextDouble() * 150,
           'hip_rotation': random.nextDouble() * 150,
           'start_end_rotation': random.nextDouble() * 150,
           'hip_wrist_lag': random.nextDouble() * 150,
           'back_posture': random.nextDouble() * 150,
-          'date': FieldValue.serverTimestamp(), // Current timestamp
+          'date': FieldValue.serverTimestamp(),
         });
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$swingCount swings added under "$_selectedClub/$currentDateTime"!')),
+        SnackBar(content: Text('$swingCount swings added under "$fullClubName/$currentDateTime"!')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -95,45 +81,79 @@ class _SwingPageState extends State<SwingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Swing Page'),
+        backgroundColor: Colors.black,
+        title: Text('Swing Page', style: GoogleFonts.tomorrow(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Center(
+      backgroundColor: Colors.black,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Select a Golf Club',
-              style: TextStyle(fontSize: 18),
+            Center(child: Image.asset('lib/images/extropian_brain.png', height: 100)),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton(
+                  onPressed: _saveSelectedClub,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFD8A42D),
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Text('Start', style: GoogleFonts.tomorrow(fontSize: 16)),
+                ),
+                ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[400],
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Text('Stop', style: GoogleFonts.tomorrow(fontSize: 16)),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            DropdownButton<String>(
-              hint: const Text('Choose a club'),
-              value: _selectedClub,
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedClub = newValue;
-                });
-              },
-              items: _golfClubs.map<DropdownMenuItem<String>>((String club) {
-                return DropdownMenuItem<String>(
-                  value: club,
-                  child: Text(club),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 20),
-            if (_selectedClub != null)
-              Text(
-                'You selected: $_selectedClub',
-                style: const TextStyle(fontSize: 16),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: clubMapping.keys.map((club) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: ChoiceChip(
+                        label: Text(club, style: GoogleFonts.tomorrow(color: Colors.white)),
+                        selected: selectedClub == club,
+                        onSelected: (isSelected) {
+                          setState(() {
+                            selectedClub = club;
+                          });
+                        },
+                        backgroundColor: Colors.grey[700],
+                        selectedColor: Color(0xFFD8A42D),
+                      ),
+                    )).toList(),
               ),
-            const SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: _saveSelectedClub,
-              child: const Text('Start Swing'),
             ),
-            const SizedBox(height: 20),
-            
+            const SizedBox(height: 16),
+            // Row(
+            //   mainAxisAlignment: MainAxisAlignment.center,
+            //   children: [
+            //     Text('Practice', style: GoogleFonts.tomorrow(color: isPractice ? Color(0xFFD8A42D) : Colors.grey, fontSize: 16)),
+            //     Switch(
+            //       value: isPractice,
+            //       onChanged: (value) {
+            //         setState(() {
+            //           isPractice = value;
+            //         });
+            //       },
+            //       activeColor: Color(0xFFD8A42D),
+            //       inactiveThumbColor: Colors.grey,
+            //     ),
+            //     Text('Play', style: GoogleFonts.tomorrow(color: !isPractice ? Color(0xFFD8A42D) : Colors.grey, fontSize: 16)),
+            //   ],
+            // ),
           ],
         ),
       ),
