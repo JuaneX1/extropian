@@ -31,6 +31,14 @@ class _BluetoothPageState extends State<BluetoothPage> {
 
       FlutterBluePlus.scanResults.listen((results) {
         for (ScanResult result in results) {
+
+          // Combine the device name and the advertisement localName
+          final deviceName = result.device.name.isNotEmpty 
+              ? result.device.name 
+              : result.advertisementData.localName;
+
+    // Skip if both are empty
+    if (deviceName.isEmpty) continue;
           if (!devicesList.any((d) => d.id == result.device.id)) {
             setState(() {
               devicesList.add(result.device);
