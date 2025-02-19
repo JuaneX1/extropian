@@ -3,8 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
-
 import 'package:extropian/pages/swing_history_session.dart';
 
 class SwingHistory extends StatefulWidget {
@@ -106,12 +104,7 @@ class _SwingHistoryState extends State<SwingHistory> {
       ),
     );
   }
-
 }
-
-
-
-
 
 class ClubSessionsScreen extends StatefulWidget {
   final String clubName;
@@ -123,9 +116,17 @@ class ClubSessionsScreen extends StatefulWidget {
 }
 
 class _ClubSessionsScreenState extends State<ClubSessionsScreen> {
-  String selectedMetric = 'wrist_speed'; // Default to speed
+  // Map metric keys to nicer labels
+  final Map<String, String> metricLabels = {
+    'wrist_speed': 'Wrist Speed',
+    'hip_rotation': 'Hip Rotation',
+    'club_head_speed': 'Club Head Speed',
+  };
+
+  String selectedMetric = 'wrist_speed'; // Default to wrist speed
   List<_ChartData> chartData = [];
   List<Map<String, dynamic>> swings = [];
+  List<Map<String, dynamic>> sessions = [];
   bool isLoading = true;
 
   @override
@@ -135,40 +136,37 @@ class _ClubSessionsScreenState extends State<ClubSessionsScreen> {
   }
 
   Future<void> _fetchAllSwings() async {
-  final User? user = FirebaseAuth.instance.currentUser;
-  if (user == null) return;
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-  final FirebaseFirestore firestore = FirebaseFirestore.instance;
-  final sessions = await firestore
-      .collection('users_swings')
-      .doc(user.uid)
-      .collection(widget.clubName)
-      .get();
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    final sessionDocs = await firestore
+        .collection('users_swings')
+        .doc(user.uid)
+        .collection(widget.clubName)
+        .get();
 
-  List<QueryDocumentSnapshot> sessionDocs = sessions.docs;
+    List<Map<String, dynamic>> fetchedSessions = [];
+    List<Map<String, dynamic>> fetchedSwings = [];
 
-  // Sort sessions by date (oldest first)
-  sessionDocs.sort((a, b) {
-    DateTime dateA = _parseDate(a.id);
-    DateTime dateB = _parseDate(b.id);
-    return dateA.compareTo(dateB); // Ascending order (oldest first)
-  });
-
-  List<Map<String, dynamic>> fetchedSwings = [];
-
-  for (var session in sessionDocs) {
-    final sessionSwings = await session.reference.collection('swings').get();
-    for (var swing in sessionSwings.docs) {
-      fetchedSwings.add(swing.data());
+    for (var session in sessionDocs.docs) {
+      final sessionSwings = await session.reference.collection('swings').get();
+      fetchedSessions.add({
+        'date': session.id,
+        'numShots': sessionSwings.docs.length,
+      });
+      for (var swing in sessionSwings.docs) {
+        fetchedSwings.add(swing.data());
+      }
     }
-  }
 
-  setState(() {
-    swings = fetchedSwings;
-    _updateChartData();
-    isLoading = false;
-  });
-}
+    setState(() {
+      sessions = fetchedSessions;
+      swings = fetchedSwings;
+      _updateChartData();
+      isLoading = false;
+    });
+  }
 
   void _updateChartData() {
     chartData = swings.asMap().entries.map((entry) {
@@ -183,155 +181,124 @@ class _ClubSessionsScreenState extends State<ClubSessionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final String yAxisLabel = metricLabels[selectedMetric] ?? selectedMetric;
+
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false, // Removes the back button
-        title: Text(
-          '${widget.clubName} Sessions',
-          style: GoogleFonts.tomorrow(color: Colors.white),
-        ),
-        backgroundColor: Colors.black, // AppBar background color
-      ),
       body: Container(
-        color: Colors.black, // Screen background color
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Buttons for metric selection
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildMetricButton(context, 'Wrist Speed', 'wrist_speed'),
-                          _buildMetricButton(context, 'Hip Rotation', 'hip_rotation'),
-                          _buildMetricButton(context, 'Club Head Speed', 'club_head_speed'),
-                        ],
-                      ),
+        color: Colors.black,
+        child: Column(
+          children: [
+            // Metric Selection Buttons
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildMetricButton(context, 'Wrist Speed', 'wrist_speed'),
+                  _buildMetricButton(context, 'Hip Rotation', 'hip_rotation'),
+                  _buildMetricButton(context, 'Club Head Speed', 'club_head_speed'),
+                ],
+              ),
+            ),
+            // Graph
+            SizedBox(
+              height: 400,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SfCartesianChart(
+                  backgroundColor: Colors.grey[900],
+                  primaryXAxis: CategoryAxis(
+                    title: AxisTitle(
+                      text: 'Swing Index',
+                      textStyle: GoogleFonts.tomorrow(color: Colors.white),
                     ),
-                    // Display average metric
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        'Total Average ${selectedMetric.capitalize()}: ${_calculateAverage().toStringAsFixed(2)}',
-                        style: GoogleFonts.tomorrow(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                    labelStyle: GoogleFonts.tomorrow(color: Colors.white),
+                  ),
+                  primaryYAxis: NumericAxis(
+                    title: AxisTitle(
+                      text: yAxisLabel,
+                      textStyle: GoogleFonts.tomorrow(color: Colors.white),
                     ),
-                    // Enlarged chart area
-                    SizedBox(
-                      height: 400, // Larger height for the chart
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: SfCartesianChart(
-                          backgroundColor: Colors.grey[900],
-                          primaryXAxis: CategoryAxis(
-                            title: AxisTitle(
-                              text: 'Swing Index',
-                              textStyle: const TextStyle(color: Colors.white),
-                            ),
-                            labelStyle: const TextStyle(color: Colors.white),
-                          ),
-                          primaryYAxis: NumericAxis(
-                            title: AxisTitle(
-                              text: selectedMetric.capitalize(),
-                              textStyle: const TextStyle(color: Colors.white),
-                            ),
-                            labelStyle: const TextStyle(color: Colors.white),
-                          ),
-                          legend: Legend(
-                            isVisible: false,
-                            textStyle: const TextStyle(color: Colors.white),
-                          ),
-                          tooltipBehavior: TooltipBehavior(enable: true),
-                          series: <LineSeries<_ChartData, int>>[
-                            LineSeries<_ChartData, int>(
-                              dataSource: chartData,
-                              xValueMapper: (_ChartData data, _) => data.index,
-                              yValueMapper: (_ChartData data, _) => data.value,
-                              name: selectedMetric.capitalize(),
-                              color: Colors.blueAccent,
-                              markerSettings: const MarkerSettings(isVisible: true),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Sessions section
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Text(
-                        'Sessions',
-                        style: GoogleFonts.tomorrow(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    // Scrollable session list
-                    SizedBox(
-                      height: 400, // Fixed height for the sessions list
-                      child: FutureBuilder<List<QueryDocumentSnapshot>>(
-                        future: _fetchSessions(),
-                        builder: (context, sessionSnapshot) {
-                          if (sessionSnapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
-                          }
-                          if (sessionSnapshot.hasError) {
-                            return Center(
-                              child: Text(
-                                'Error: ${sessionSnapshot.error}',
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            );
-                          }
-
-                          final sessions = sessionSnapshot.data ?? [];
-                          if (sessions.isEmpty) {
-                            return const Center(
-                              child: Text(
-                                'No sessions found for this club.',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            );
-                          }
-
-                          return ListView.builder(
-                            itemCount: sessions.length,
-                            itemBuilder: (context, index) {
-                              final session = sessions[sessions.length - 1 - index];
-                              final date = session.id;
-                              return ListTile(
-                                title: Text(
-                                  date,
-                                  style: GoogleFonts.tomorrow(color: Colors.white),
-                                ),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => SessionSwingsScreen(
-                                        clubName: widget.clubName,
-                                        date: date,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          );
-                        },
-                      ),
+                    labelStyle: GoogleFonts.tomorrow(color: Colors.white),
+                  ),
+                  tooltipBehavior: TooltipBehavior(enable: true),
+                  series: <ChartSeries<_ChartData, int>>[
+                    // Use a SplineSeries to get rounded/curved edges
+                    SplineSeries<_ChartData, int>(
+                      dataSource: chartData,
+                      xValueMapper: (_ChartData data, _) => data.index,
+                      yValueMapper: (_ChartData data, _) => data.value,
+                      name: yAxisLabel,
+                      markerSettings: const MarkerSettings(isVisible: true),
+                      splineType: SplineType.natural, // Gives smoother curves
+                      color: const Color(0xFFD8A42D),
+                      width: 2,
                     ),
                   ],
                 ),
               ),
+            ),
+            // Sessions List
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: sessions.length,
+                itemBuilder: (context, index) {
+                  final session = sessions[index];
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SessionSwingsScreen(
+                            clubName: widget.clubName,
+                            date: session['date'],
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[900],
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${session['date']} (${session['numShots']} shots)',
+                            style: GoogleFonts.tomorrow(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            'Tap to view swings',
+                            style: GoogleFonts.tomorrow(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -339,7 +306,8 @@ class _ClubSessionsScreenState extends State<ClubSessionsScreen> {
   Widget _buildMetricButton(BuildContext context, String label, String metric) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: selectedMetric == metric ? const Color(0xFFD8A42D) : Colors.grey[800],
+        backgroundColor:
+            selectedMetric == metric ? const Color(0xFFD8A42D) : Colors.grey[800],
         foregroundColor: selectedMetric == metric ? Colors.black : Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
@@ -358,50 +326,10 @@ class _ClubSessionsScreenState extends State<ClubSessionsScreen> {
       ),
     );
   }
-
-  double _calculateAverage() {
-    if (chartData.isEmpty) return 0.0;
-    return chartData.map((e) => e.value).reduce((a, b) => a + b) / chartData.length;
-  }
-
-  Future<List<QueryDocumentSnapshot>> _fetchSessions() async {
-    final User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) return [];
-
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    final sessions = await firestore
-        .collection('users_swings')
-        .doc(user.uid)
-        .collection(widget.clubName)
-        .get();
-
-    List<QueryDocumentSnapshot> sessionDocs = sessions.docs;
-
-    // Sorting sessions by date (most recent first)
-    sessionDocs.sort((a, b) {
-      DateTime dateA = _parseDate(a.id);
-      DateTime dateB = _parseDate(b.id);
-      return dateA.compareTo(dateB); // Descending order (newest first)
-    });
-
-    return sessionDocs;
-  }
-
-  // Function to parse date strings like "January 23, 2025 6:05 PM"
-  DateTime _parseDate(String dateString) {
-    try {
-      return DateTime.parse(dateString); // If stored in ISO 8601 format
-    } catch (_) {
-      return DateFormat("MMMM d, yyyy h:mm a").parse(dateString);
-    }
-  }
-
 }
-
 
 class _ChartData {
   final int index;
   final double value;
-
   _ChartData({required this.index, required this.value});
 }
