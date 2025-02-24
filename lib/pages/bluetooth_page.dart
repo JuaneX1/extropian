@@ -12,6 +12,7 @@ class BluetoothPage extends StatefulWidget {
 class _BluetoothPageState extends State<BluetoothPage> {
   List<BluetoothDevice> devicesList = [];
   bool isScanning = false;
+  String connectedDevice = "";
 
   @override
   void initState() {
@@ -24,13 +25,22 @@ class _BluetoothPageState extends State<BluetoothPage> {
     if (!isScanning) {
       setState(() {
         isScanning = true;
-        devicesList.clear(); // Clear previous scan results
+        devicesList.clear();
+        connectedDevice = "";
       });
 
       FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
 
       FlutterBluePlus.scanResults.listen((results) {
         for (ScanResult result in results) {
+
+          // Combine the device name and the advertisement localName
+          final deviceName = result.device.name.isNotEmpty 
+              ? result.device.name 
+              : result.advertisementData.localName;
+
+    // Skip if both are empty
+    if (deviceName.isEmpty) continue;
           if (!devicesList.any((d) => d.id == result.device.id)) {
             setState(() {
               devicesList.add(result.device);
@@ -50,8 +60,11 @@ class _BluetoothPageState extends State<BluetoothPage> {
   Future<void> connectToDevice(BluetoothDevice device) async {
     try {
       await device.connect();
+      setState(() {
+        connectedDevice = device.name.isNotEmpty ? device.name : "Unknown Device";
+      });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Connected to ${device.name.isNotEmpty ? device.name : "Unknown Device"}")),
+        SnackBar(content: Text("Connected to $connectedDevice")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -81,10 +94,58 @@ class _BluetoothPageState extends State<BluetoothPage> {
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Bluetooth Icon
-            const Icon(Icons.bluetooth_audio, size: 100, color: Colors.blueAccent),
+            // Extropian Avatar with label 
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Image.asset('lib/images/extropianAvatar.png', width: 500), 
+                const Positioned(
+                  left: 135,
+                  top: 123, 
+                  child: Icon(
+                    Icons.circle, // Circle Icon highlighting Wrist #1
+                    color: Color(0xFFD8A42D),
+                    size: 10, 
+                  ),
+                ),
+                const Positioned(
+                  left: 120,
+                  top: 130, 
+                  child: Icon(
+                    Icons.arrow_upward, // Arrow Icon pointing to Wrist #1
+                    color: Color(0xFFD8A42D),
+                    size: 40,
+                  ),
+                ),
+                Positioned(
+                  left: 100,
+                  top: 165, 
+                  child: Text(
+                    "Wrist #1", // Wrist #1 Title for placement of Device 
+                    style: GoogleFonts.tomorrow(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                if (connectedDevice.isNotEmpty)
+                  Positioned(
+                    left: 50,
+                    bottom: 20,
+                    child: Text(
+                      "Connected to: $connectedDevice",
+                      style: GoogleFonts.tomorrow(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+
             const SizedBox(height: 20),
 
             // Title
@@ -135,7 +196,6 @@ class _BluetoothPageState extends State<BluetoothPage> {
                       },
                     ),
             ),
-
             const SizedBox(height: 10),
 
             // Button: Refresh Devices
@@ -151,7 +211,6 @@ class _BluetoothPageState extends State<BluetoothPage> {
                 style: GoogleFonts.tomorrow(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
               ),
             ),
-
             const SizedBox(height: 10),
 
             // Button: Relocate Device (Dummy Action)
