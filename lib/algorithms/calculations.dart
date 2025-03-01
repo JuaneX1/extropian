@@ -1,17 +1,17 @@
 import 'dart:math';
 
 class DataFrame {
-  final Map<String, List<dynamic>> _columns = {};
+  final Map<String, List<dynamic>> columns = {};
 
   void addColumn(String name, List<dynamic> values) {
-    _columns[name] = values;
+    columns[name] = values;
   }
 
   List<dynamic>? getColumn(String name) {
-    return _columns[name];
+    return columns[name];
   }
 
-  int get rowCount => _columns.isNotEmpty ? _columns.values.first.length : 0;
+  int get rowCount => columns.isNotEmpty ? columns.values.first.length : 0;
 }
 
 class Calculations {
@@ -20,8 +20,16 @@ class Calculations {
     const double rotationThreshold = 0.1;
     const double adjustmentFactor = 0.8;
 
-    // Calculate time intervals (in seconds)
+    // Ensure required columns exist
+    if (device2Df.getColumn("Timestamp") == null ||
+        device2Df.getColumn("LinearAccelMagnitude") == null) {
+      print("Missing necessary data for speed calculation.");
+      return 0.0;
+    }
+
     List<int> timestamps = List<int>.from(device2Df.getColumn("Timestamp")!);
+    List<double> linAccelMag = List<double>.from(device2Df.getColumn("LinearAccelMagnitude")!);
+
     List<double> dtColumn = [0.0];
 
     for (int i = 1; i < timestamps.length; i++) {
@@ -31,15 +39,17 @@ class Calculations {
     device2Df.addColumn("dt", dtColumn);
 
     // Identify stationary periods
-    List<double> linAccelMag = List<double>.from(device2Df.getColumn("LinearAccelMagnitude")!);
     List<bool> stationaryColumn = linAccelMag.map((value) => value < stationaryThreshold).toList();
     device2Df.addColumn("Stationary", stationaryColumn);
 
-    // Initialize speed and deceleration columns
-    List<double> speedColumn = [0.0];
-    List<bool> deceleratingColumn = [false];
+    // Ensure gyro data exists
+    if (device2Df.getColumn("GyroX") == null ||
+        device2Df.getColumn("GyroY") == null ||
+        device2Df.getColumn("GyroZ") == null) {
+      print("Missing gyroscope data.");
+      return 0.0;
+    }
 
-    // Compute angular velocity magnitude from gyroscope data
     List<double> gyroX = List<double>.from(device2Df.getColumn("GyroX")!);
     List<double> gyroY = List<double>.from(device2Df.getColumn("GyroY")!);
     List<double> gyroZ = List<double>.from(device2Df.getColumn("GyroZ")!);
@@ -52,6 +62,9 @@ class Calculations {
     device2Df.addColumn("AngularVelocityMagnitude", angularVelocityMagColumn);
 
     // Compute speed
+    List<double> speedColumn = [0.0];
+    List<bool> deceleratingColumn = [false];
+
     for (int i = 1; i < linAccelMag.length; i++) {
       bool isStationary = stationaryColumn[i];
       if (!isStationary) {
@@ -97,6 +110,11 @@ class Calculations {
   }
 
   static (double, double, int?, int?) calculateHipRotation(DataFrame device1Df) {
+    if (device1Df.getColumn("Timestamp") == null || device1Df.getColumn("Yaw") == null) {
+      print("Missing yaw or timestamp data.");
+      return (0.0, 0.0, null, null);
+    }
+
     List<int> timestamps = List<int>.from(device1Df.getColumn("Timestamp")!);
     List<double> yawColumn = List<double>.from(device1Df.getColumn("Yaw")!);
 
@@ -121,6 +139,11 @@ class Calculations {
   }
 
   static (double, double) calculatePreSwingPosture(DataFrame device1Df) {
+    if (device1Df.getColumn("Roll") == null) {
+      print("Missing roll data.");
+      return (0.0, 0.0);
+    }
+
     List<double> rollColumn = List<double>.from(device1Df.getColumn("Roll")!);
     Map<double, int> frequencyMap = {};
 
