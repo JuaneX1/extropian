@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:extropian/pages/swing_history_session.dart';
+import 'package:intl/intl.dart'; 
 
 class SwingHistory extends StatefulWidget {
   const SwingHistory({super.key});
@@ -159,6 +160,14 @@ class _ClubSessionsScreenState extends State<ClubSessionsScreen> {
         fetchedSwings.add(swing.data());
       }
     }
+
+    // Sort the sessions by date in descending order
+    final dateFormat = DateFormat("MMMM d, yyyy h:mm a");
+    fetchedSessions.sort((a, b) {
+      final dateA = dateFormat.parse(a['date']);
+      final dateB = dateFormat.parse(b['date']);
+      return dateB.compareTo(dateA);
+    });
 
     setState(() {
       sessions = fetchedSessions;
