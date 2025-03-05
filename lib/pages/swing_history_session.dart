@@ -19,8 +19,28 @@ class SessionSwingsScreen extends StatefulWidget {
 }
 
 class _SessionSwingsScreenState extends State<SessionSwingsScreen> {
-  String selectedMetric = 'wrist_speed'; // Default metric
-  int currentIndex = 0; // Current shot index
+  // Maps Firestore keys to user-friendly labels
+  final Map<String, String> metricLabels = {
+    'wrist_speed': 'Wrist Speed',
+    'hip_rotation': 'Hip Rotation',
+    'club_head_speed': 'Club Head Speed',
+    'start_end_rotation': 'Start/End Rotation',
+    'hip_wrist_lag': 'Hip to Wrist Lag',
+    'back_posture': 'Back Posture',
+  };
+
+  // Descriptions for the info pop-up
+  final Map<String, String> metricDescriptions = {
+    'Wrist Speed': 'How quickly the wrists rotate or move during the swing.',
+    'Hip Rotation': 'Measures the rotation angle of your hips during the swing.',
+    'Club Head Speed': 'The speed of the club head at impact.',
+    'Start/End Rotation': 'Tracks the initial and final rotation of the body.',
+    'Hip to Wrist Lag': 'Time/angle lag between hip turn and wrist movement.',
+    'Back Posture': 'Measures the spine angle and posture throughout the swing.',
+  };
+
+  String selectedMetric = 'wrist_speed'; // Default metric for the chart
+  int currentIndex = 0;                  // Current shot index
   List<_ChartData> chartData = [];
   List<Map<String, dynamic>> swings = [];
   bool isLoading = true;
@@ -55,16 +75,15 @@ class _SessionSwingsScreenState extends State<SessionSwingsScreen> {
     chartData = swings.asMap().entries.map((entry) {
       final index = entry.key;
       final swing = entry.value;
-      return _ChartData(
-        index: index + 1,
-        value: (swing[selectedMetric] ?? 0).toDouble(),
-      );
+      final double value = (swing[selectedMetric] ?? 0).toDouble();
+      return _ChartData(index + 1, value);
     }).toList();
   }
 
   double _calculateAverage() {
     if (chartData.isEmpty) return 0.0;
-    return chartData.map((data) => data.value).reduce((a, b) => a + b) / chartData.length;
+    final sum = chartData.fold(0.0, (prev, element) => prev + element.value);
+    return sum / chartData.length;
   }
 
   void _changeShotIndex(int direction) {
@@ -85,11 +104,11 @@ class _SessionSwingsScreenState extends State<SessionSwingsScreen> {
           backgroundColor: Colors.black,
           iconTheme: const IconThemeData(color: Colors.white),
         ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
+
+    final String chartLabel = metricLabels[selectedMetric] ?? selectedMetric;
 
     return Scaffold(
       appBar: AppBar(
@@ -105,6 +124,7 @@ class _SessionSwingsScreenState extends State<SessionSwingsScreen> {
           color: Colors.black,
           child: Column(
             children: [
+              // 1) Metric Selection Buttons
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Row(
@@ -116,10 +136,12 @@ class _SessionSwingsScreenState extends State<SessionSwingsScreen> {
                   ],
                 ),
               ),
+
+              // 2) Average text
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text(
-                  'Average ${selectedMetric.capitalize()}: ${_calculateAverage().toStringAsFixed(2)}',
+                  'Average $chartLabel: ${_calculateAverage().toStringAsFixed(2)}',
                   style: GoogleFonts.tomorrow(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -127,6 +149,8 @@ class _SessionSwingsScreenState extends State<SessionSwingsScreen> {
                   ),
                 ),
               ),
+
+              // 3) Spline Chart (smooth/rounded) with current shot highlighted
               SizedBox(
                 height: 400,
                 child: Padding(
@@ -136,35 +160,37 @@ class _SessionSwingsScreenState extends State<SessionSwingsScreen> {
                     primaryXAxis: CategoryAxis(
                       title: AxisTitle(
                         text: 'Swing Index',
-                        textStyle: const TextStyle(color: Colors.white),
+                        textStyle: GoogleFonts.tomorrow(color: Colors.white),
                       ),
-                      labelStyle: const TextStyle(color: Colors.white),
+                      labelStyle: GoogleFonts.tomorrow(color: Colors.white),
                     ),
                     primaryYAxis: NumericAxis(
                       title: AxisTitle(
-                        text: selectedMetric.capitalize(),
-                        textStyle: const TextStyle(color: Colors.white),
+                        text: chartLabel,
+                        textStyle: GoogleFonts.tomorrow(color: Colors.white),
                       ),
-                      labelStyle: const TextStyle(color: Colors.white),
-                    ),
-                    legend: Legend(
-                      isVisible: false,
-                      textStyle: const TextStyle(color: Colors.white),
+                      labelStyle: GoogleFonts.tomorrow(color: Colors.white),
                     ),
                     tooltipBehavior: TooltipBehavior(enable: true),
-                    series: <LineSeries<_ChartData, int>>[
-                      LineSeries<_ChartData, int>(
+                    series: <ChartSeries<_ChartData, int>>[
+                      // Main series
+                      SplineSeries<_ChartData, int>(
                         dataSource: chartData,
                         xValueMapper: (_ChartData data, _) => data.index,
                         yValueMapper: (_ChartData data, _) => data.value,
-                        name: selectedMetric.capitalize(),
-                        color: Colors.blueAccent,
+                        name: chartLabel,
+                        splineType: SplineType.natural,
+                        color: const Color(0xFFD8A42D),
+                        width: 2,
                         markerSettings: const MarkerSettings(isVisible: true),
                       ),
-                      LineSeries<_ChartData, int>(
+                      // Highlight the current shot in red
+                      SplineSeries<_ChartData, int>(
                         dataSource: [chartData[currentIndex]],
                         xValueMapper: (_ChartData data, _) => data.index,
                         yValueMapper: (_ChartData data, _) => data.value,
+                        splineType: SplineType.natural,
+                        color: Colors.red,
                         markerSettings: const MarkerSettings(
                           isVisible: true,
                           color: Colors.red,
@@ -176,6 +202,8 @@ class _SessionSwingsScreenState extends State<SessionSwingsScreen> {
                   ),
                 ),
               ),
+
+              // 4) Shot navigation
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -183,15 +211,12 @@ class _SessionSwingsScreenState extends State<SessionSwingsScreen> {
                     icon: const Icon(Icons.arrow_left, color: Colors.white),
                     onPressed: () => _changeShotIndex(-1),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text(
-                      'Shot ${currentIndex + 1}',
-                      style: GoogleFonts.tomorrow(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                  Text(
+                    'Shot ${currentIndex + 1}',
+                    style: GoogleFonts.tomorrow(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
                   IconButton(
@@ -200,26 +225,25 @@ class _SessionSwingsScreenState extends State<SessionSwingsScreen> {
                   ),
                 ],
               ),
+
+              // 5) Metrics for the current shot in a smaller 2x3 grid with info pop-ups
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Column(
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  // childAspectRatio > 1 => boxes are wider than tall
+                  childAspectRatio: 2.2,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildMetricCube('Wrist Speed', swings[currentIndex]['wrist_speed']),
-                        _buildMetricCube('Club Head Speed', swings[currentIndex]['club_head_speed']),
-                        _buildMetricCube('Hip Rotation', swings[currentIndex]['hip_rotation']),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildMetricCube('Start/End Rotation', swings[currentIndex]['start_end_rotation']),
-                        _buildMetricCube('Hip to Wrist Lag', swings[currentIndex]['hip_wrist_lag']),
-                        _buildMetricCube('Back Posture', swings[currentIndex]['back_posture']),
-                      ],
-                    ),
+                    _buildShotMetricCard('Wrist Speed', swings[currentIndex]['wrist_speed']),
+                    _buildShotMetricCard('Club Head Speed', swings[currentIndex]['club_head_speed']),
+                    _buildShotMetricCard('Hip Rotation', swings[currentIndex]['hip_rotation']),
+                    _buildShotMetricCard('Start/End Rotation', swings[currentIndex]['start_end_rotation']),
+                    _buildShotMetricCard('Hip to Wrist Lag', swings[currentIndex]['hip_wrist_lag']),
+                    _buildShotMetricCard('Back Posture', swings[currentIndex]['back_posture']),
                   ],
                 ),
               ),
@@ -230,16 +254,18 @@ class _SessionSwingsScreenState extends State<SessionSwingsScreen> {
     );
   }
 
-  Widget _buildMetricButton(BuildContext context, String label, String metric) {
+  /// Metric selection button
+  Widget _buildMetricButton(BuildContext context, String label, String metricKey) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: selectedMetric == metric ? const Color(0xFFD8A42D) : Colors.grey[800],
-        foregroundColor: selectedMetric == metric ? Colors.black : Colors.white,
+        backgroundColor:
+            (selectedMetric == metricKey) ? const Color(0xFFD8A42D) : Colors.grey[800],
+        foregroundColor: (selectedMetric == metricKey) ? Colors.black : Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
       onPressed: () {
         setState(() {
-          selectedMetric = metric;
+          selectedMetric = metricKey;
           _updateChartData();
         });
       },
@@ -253,51 +279,100 @@ class _SessionSwingsScreenState extends State<SessionSwingsScreen> {
     );
   }
 
-  Widget _buildMetricCube(String label, dynamic value) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Container(
-        width: 100,
-        height: 100,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.grey[900],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.tomorrow(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+  /// Single card for each shot metric with an info icon for the pop-up
+  Widget _buildShotMetricCard(String label, dynamic rawValue) {
+    final String displayValue = (rawValue == null)
+        ? 'N/A'
+        : (rawValue is num)
+            ? rawValue.toStringAsFixed(2)
+            : rawValue.toString();
+
+    // Get the description (if any) from the map
+    final String description = metricDescriptions[label] ?? 'No description provided.';
+
+    return Container(
+      padding: const EdgeInsets.all(12), // smaller padding
+      decoration: BoxDecoration(
+        color: Colors.grey[850],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title + Info Icon
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: GoogleFonts.tomorrow(
+                    color: Colors.white70,
+                    fontSize: 14, // smaller than before
+                  ),
+                ),
               ),
+              GestureDetector(
+                onTap: () => _displayInfoPopup(context, label, description),
+                child: const Icon(Icons.info_outline, color: Colors.white70, size: 18),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Value
+          Text(
+            displayValue,
+            style: GoogleFonts.tomorrow(
+              color: Colors.white,
+              fontSize: 18, // smaller than before
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 8),
-            Text(
-              value != null ? value.toStringAsFixed(2) : 'N/A',
-              style: GoogleFonts.tomorrow(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Info popup function (adapted from your existing code)
+  void _displayInfoPopup(BuildContext context, String metric, String description) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.black,
+          title: Text(
+            metric,
+            style: GoogleFonts.tomorrow(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            description,
+            style: GoogleFonts.tomorrow(
+              color: Colors.white70,
+              fontSize: 16,
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                "Close",
+                style: GoogleFonts.tomorrow(color: Colors.orangeAccent),
               ),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
+// Data model for the chart
 class _ChartData {
   final int index;
   final double value;
-
-  _ChartData({required this.index, required this.value});
-}
-
-extension StringExtension on String {
-  String capitalize() => this[0].toUpperCase() + substring(1);
+  _ChartData(this.index, this.value);
 }
