@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:provider/provider.dart';
+import 'bluetooth_provider.dart';
 
 class BluetoothPage extends StatefulWidget {
   const BluetoothPage({super.key});
@@ -13,6 +15,7 @@ class _BluetoothPageState extends State<BluetoothPage> {
   List<BluetoothDevice> devicesList = [];
   bool isScanning = false;
   String connectedDevice = "";
+  BluetoothDevice? lastConnectedDevice;
 
   @override
   void initState() {
@@ -33,14 +36,10 @@ class _BluetoothPageState extends State<BluetoothPage> {
 
       FlutterBluePlus.scanResults.listen((results) {
         for (ScanResult result in results) {
-
-          // Combine the device name and the advertisement localName
-          final deviceName = result.device.name.isNotEmpty 
-              ? result.device.name 
+          final deviceName = result.device.name.isNotEmpty
+              ? result.device.name
               : result.advertisementData.localName;
-
-    // Skip if both are empty
-    if (deviceName.isEmpty) continue;
+          if (deviceName.isEmpty) continue;
           if (!devicesList.any((d) => d.id == result.device.id)) {
             setState(() {
               devicesList.add(result.device);
@@ -56,13 +55,15 @@ class _BluetoothPageState extends State<BluetoothPage> {
     }
   }
 
-  // Connect to a Bluetooth device
+  // Connect to a Bluetooth device and store it globally
   Future<void> connectToDevice(BluetoothDevice device) async {
     try {
       await device.connect();
       setState(() {
         connectedDevice = device.name.isNotEmpty ? device.name : "Unknown Device";
+        lastConnectedDevice = device;
       });
+      Provider.of<BluetoothProvider>(context, listen: false).setConnectedDevice(device);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Connected to $connectedDevice")),
       );
@@ -95,34 +96,34 @@ class _BluetoothPageState extends State<BluetoothPage> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // Extropian Avatar with label 
+            // Extropian Avatar with label
             Stack(
               alignment: Alignment.center,
               children: [
-                Image.asset('lib/images/extropianAvatar.png', width: 500), 
+                Image.asset('lib/images/extropianAvatar.png', width: 500),
                 const Positioned(
                   left: 135,
-                  top: 123, 
+                  top: 123,
                   child: Icon(
-                    Icons.circle, // Circle Icon highlighting Wrist #1
+                    Icons.circle,
                     color: Color(0xFFD8A42D),
-                    size: 10, 
+                    size: 10,
                   ),
                 ),
                 const Positioned(
                   left: 120,
-                  top: 130, 
+                  top: 130,
                   child: Icon(
-                    Icons.arrow_upward, // Arrow Icon pointing to Wrist #1
+                    Icons.arrow_upward,
                     color: Color(0xFFD8A42D),
                     size: 40,
                   ),
                 ),
                 Positioned(
                   left: 100,
-                  top: 165, 
+                  top: 165,
                   child: Text(
-                    "Wrist #1", // Wrist #1 Title for placement of Device 
+                    "Wrist #1",
                     style: GoogleFonts.tomorrow(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -145,9 +146,7 @@ class _BluetoothPageState extends State<BluetoothPage> {
                   ),
               ],
             ),
-
             const SizedBox(height: 20),
-
             // Title
             Text(
               "Connect to your Smart Device",
@@ -159,7 +158,6 @@ class _BluetoothPageState extends State<BluetoothPage> {
               ),
             ),
             const SizedBox(height: 10),
-
             // Subtitle
             Text(
               "Turn on Bluetooth and ensure the device is discoverable.",
@@ -167,7 +165,6 @@ class _BluetoothPageState extends State<BluetoothPage> {
               style: GoogleFonts.tomorrow(fontSize: 16, color: Colors.grey[400]),
             ),
             const SizedBox(height: 20),
-
             // Bluetooth Devices List
             Expanded(
               child: devicesList.isEmpty
@@ -197,7 +194,6 @@ class _BluetoothPageState extends State<BluetoothPage> {
                     ),
             ),
             const SizedBox(height: 10),
-
             // Button: Refresh Devices
             ElevatedButton(
               onPressed: isScanning ? null : startScan,
@@ -212,13 +208,16 @@ class _BluetoothPageState extends State<BluetoothPage> {
               ),
             ),
             const SizedBox(height: 10),
-
-            // Button: Relocate Device (Dummy Action)
+            // Button: Relocate Device
             ElevatedButton(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Relocating Device")),
-                );
+                if (lastConnectedDevice != null) {
+                  connectToDevice(lastConnectedDevice!);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("No device to relocate. Please connect to a device first.")),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
