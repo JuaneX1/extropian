@@ -2,20 +2,6 @@
 import 'dart:typed_data';
 import 'dart:math';
 
-<<<<<<< Updated upstream
-class DataFrame {
-  final Map<String, List<dynamic>> columns = {};
-
-  void addColumn(String name, List<dynamic> values) {
-    columns[name] = values;
-  }
-
-  List<dynamic>? getColumn(String name) {
-    return columns[name];
-  }
-
-  int get rowCount => columns.isNotEmpty ? columns.values.first.length : 0;
-=======
 /// A row of sensor data, keyed by timestamp.
 class SensorDataRow {
   final int timestamp;
@@ -42,88 +28,14 @@ class SensorDataRow {
   double? roll;
 
   SensorDataRow(this.timestamp);
->>>>>>> Stashed changes
 }
 
 /// Parse all raw packets and merge them into a map keyed by timestamp.
 Map<int, SensorDataRow> parseAllPackets(List<List<int>> rawPackets) {
   final dataMap = <int, SensorDataRow>{};
 
-<<<<<<< Updated upstream
-    // Ensure required columns exist
-    if (device2Df.getColumn("Timestamp") == null ||
-        device2Df.getColumn("LinearAccelMagnitude") == null) {
-      print("Missing necessary data for speed calculation.");
-      return 0.0;
-    }
-
-    List<int> timestamps = List<int>.from(device2Df.getColumn("Timestamp")!);
-    List<double> linAccelMag = List<double>.from(device2Df.getColumn("LinearAccelMagnitude")!);
-
-    List<double> dtColumn = [0.0];
-
-    for (int i = 1; i < timestamps.length; i++) {
-      double dt = (timestamps[i] - timestamps[i - 1]) / 1000.0;
-      dtColumn.add(dt);
-    }
-    device2Df.addColumn("dt", dtColumn);
-
-    // Identify stationary periods
-    List<bool> stationaryColumn = linAccelMag.map((value) => value < stationaryThreshold).toList();
-    device2Df.addColumn("Stationary", stationaryColumn);
-
-    // Ensure gyro data exists
-    if (device2Df.getColumn("GyroX") == null ||
-        device2Df.getColumn("GyroY") == null ||
-        device2Df.getColumn("GyroZ") == null) {
-      print("Missing gyroscope data.");
-      return 0.0;
-    }
-
-    List<double> gyroX = List<double>.from(device2Df.getColumn("GyroX")!);
-    List<double> gyroY = List<double>.from(device2Df.getColumn("GyroY")!);
-    List<double> gyroZ = List<double>.from(device2Df.getColumn("GyroZ")!);
-
-    List<double> angularVelocityMagColumn = [];
-    for (int i = 0; i < gyroX.length; i++) {
-      double angularVelocityMag = sqrt(pow(gyroX[i], 2) + pow(gyroY[i], 2) + pow(gyroZ[i], 2));
-      angularVelocityMagColumn.add(angularVelocityMag);
-    }
-    device2Df.addColumn("AngularVelocityMagnitude", angularVelocityMagColumn);
-
-    // Compute speed
-    List<double> speedColumn = [0.0];
-    List<bool> deceleratingColumn = [false];
-
-    for (int i = 1; i < linAccelMag.length; i++) {
-      bool isStationary = stationaryColumn[i];
-      if (!isStationary) {
-        double prevSpeed = speedColumn[i - 1];
-        double acceleration = linAccelMag[i];
-        double angularVelocityMag = angularVelocityMagColumn[i];
-
-        if (angularVelocityMag > rotationThreshold) {
-          acceleration *= adjustmentFactor;
-        }
-
-        double dt = dtColumn[i];
-        double newSpeed = prevSpeed + acceleration * dt;
-
-        speedColumn.add(newSpeed);
-        deceleratingColumn.add(newSpeed < prevSpeed);
-      } else {
-        speedColumn.add(0.0);
-        deceleratingColumn.add(false);
-      }
-    }
-    device2Df.addColumn("Speed", speedColumn);
-    device2Df.addColumn("Decelerating", deceleratingColumn);
-
-    return speedColumn.reduce(max);
-=======
   for (final packet in rawPackets) {
     _parseSensorPacket(packet, dataMap);
->>>>>>> Stashed changes
   }
 
   return dataMap;
@@ -141,58 +53,6 @@ void _parseSensorPacket(List<int> packet, Map<int, SensorDataRow> dataMap) {
     return;
   }
 
-<<<<<<< Updated upstream
-  static (double, double, int?, int?) calculateHipRotation(DataFrame device1Df) {
-    if (device1Df.getColumn("Timestamp") == null || device1Df.getColumn("Yaw") == null) {
-      print("Missing yaw or timestamp data.");
-      return (0.0, 0.0, null, null);
-    }
-
-    List<int> timestamps = List<int>.from(device1Df.getColumn("Timestamp")!);
-    List<double> yawColumn = List<double>.from(device1Df.getColumn("Yaw")!);
-
-    List<double> unwrappedYaw = [yawColumn.first];
-    for (int i = 1; i < yawColumn.length; i++) {
-      double diff = yawColumn[i] - yawColumn[i - 1];
-      if (diff > 180) {
-        unwrappedYaw.add(unwrappedYaw.last + (yawColumn[i] - 360));
-      } else if (diff < -180) {
-        unwrappedYaw.add(unwrappedYaw.last + (yawColumn[i] + 360));
-      } else {
-        unwrappedYaw.add(yawColumn[i]);
-      }
-    }
-
-    double minYaw = unwrappedYaw.reduce(min);
-    double maxYaw = unwrappedYaw.reduce(max);
-    int? minYawTimestamp = timestamps[unwrappedYaw.indexOf(minYaw)];
-    int? maxYawTimestamp = timestamps[unwrappedYaw.indexOf(maxYaw)];
-
-    return (minYaw, maxYaw, minYawTimestamp, maxYawTimestamp);
-  }
-
-  static (double, double) calculatePreSwingPosture(DataFrame device1Df) {
-    if (device1Df.getColumn("Roll") == null) {
-      print("Missing roll data.");
-      return (0.0, 0.0);
-    }
-
-    List<double> rollColumn = List<double>.from(device1Df.getColumn("Roll")!);
-    Map<double, int> frequencyMap = {};
-
-    for (double value in rollColumn) {
-      double roundedValue = value.roundToDouble();
-      frequencyMap[roundedValue] = (frequencyMap[roundedValue] ?? 0) + 1;
-    }
-
-    List<double> sortedKeys = frequencyMap.keys.toList()
-      ..sort((a, b) => frequencyMap[b]!.compareTo(frequencyMap[a]!));
-
-    return (
-      sortedKeys.isNotEmpty ? sortedKeys[0] : 0.0,
-      sortedKeys.length > 1 ? sortedKeys[1] : 0.0,
-    );
-=======
   switch (sensorType) {
     case 0x08:
       _parseGyroMagnet(bytes, dataMap);
@@ -203,7 +63,6 @@ void _parseSensorPacket(List<int> packet, Map<int, SensorDataRow> dataMap) {
     case 0x0A:
       _parseRV(bytes, dataMap);
       break;
->>>>>>> Stashed changes
   }
 }
 
