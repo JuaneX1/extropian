@@ -102,8 +102,8 @@ class _BluetoothPageState extends State<BluetoothPage> {
               children: [
                 Image.asset('lib/images/extropianAvatar.png', width: 500),
                 const Positioned(
-                  left: 135,
-                  top: 123,
+                  left: 105,
+                  top: 98,
                   child: Icon(
                     Icons.circle,
                     color: Color(0xFFD8A42D),
@@ -111,8 +111,8 @@ class _BluetoothPageState extends State<BluetoothPage> {
                   ),
                 ),
                 const Positioned(
-                  left: 120,
-                  top: 130,
+                  left: 91,
+                  top: 107,
                   child: Icon(
                     Icons.arrow_upward,
                     color: Color(0xFFD8A42D),
@@ -120,8 +120,8 @@ class _BluetoothPageState extends State<BluetoothPage> {
                   ),
                 ),
                 Positioned(
-                  left: 100,
-                  top: 165,
+                  left: 76,
+                  top: 140,
                   child: Text(
                     "Wrist #1",
                     style: GoogleFonts.tomorrow(
