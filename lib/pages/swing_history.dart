@@ -204,7 +204,7 @@ class _ClubSessionsScreenState extends State<ClubSessionsScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildMetricButton(context, 'Wrist Speed', 'wrist_speed'),
-                  _buildMetricButton(context, 'Hip Rotation', 'hip_rotation'),
+                  //_buildMetricButton(context, 'Hip Rotation', 'hip_rotation'),
                   _buildMetricButton(context, 'Club Head Speed', 'club_head_speed'),
                 ],
               ),
