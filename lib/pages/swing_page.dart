@@ -3,9 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import 'dart:math';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../algorithms/calculations.dart';
 import 'bluetooth_provider.dart';
+
+
 
 class SwingPage extends StatefulWidget {
   const SwingPage({super.key});
@@ -20,6 +27,80 @@ class _SwingPageState extends State<SwingPage> {
   Map<int, SensorDataRow> _parsedDataMap = {};
   Map<String, dynamic>? _swingMetrics;
   StreamSubscription<List<int>>? _subscription;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final User? _user = FirebaseAuth.instance.currentUser;
+
+  String? selectedClub;
+  final Map<String, String> clubMapping = {
+    'D': 'Driver',
+    '3W': '3 Wood',
+    '3I': '3 Iron',
+    '4I': '4 Iron',
+    '5I': '5 Iron',
+    '6I': '6 Iron',
+    '7I': '7 Iron',
+    '8I': '8 Iron',
+    '9I': '9 Iron',
+    'PW': 'Pitching Wedge',
+    'SW': 'Sand Wedge',
+    '60°': '60 Degree'
+  };
+  Future<void> _saveSelectedClub() async {
+    if (selectedClub == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a golf club')),
+      );
+      return;
+    }
+
+    String fullClubName = clubMapping[selectedClub] ?? selectedClub!;
+    String currentDate = DateFormat('MMMM d, yyyy').format(DateTime.now());
+
+    try {
+      var dateDocRef = _firestore
+          .collection('users_swings')
+          .doc(_user?.uid)
+          .collection(fullClubName)
+          .doc(currentDate);
+
+
+      // Get existing document to check totalSwings count
+      var docSnapshot = await dateDocRef.get();
+      int newSwingNumber = 1;
+
+      if (docSnapshot.exists) {
+        var data = docSnapshot.data();
+        if (data != null && data.containsKey('totalSwings')) {
+          newSwingNumber = (data['totalSwings'] as int) + 1;
+        }
+        await dateDocRef.update({'totalSwings': newSwingNumber});
+      } else {
+        await dateDocRef.set({'totalSwings': newSwingNumber});
+      }
+      double wristSpeed = _swingMetrics!["maxWristSpeed_mph"];
+      double clubHeadSpeed = _swingMetrics!["clubheadSpeed_mph"];
+
+      await dateDocRef.collection('swings').doc(newSwingNumber.toString()).set({
+            'wrist_speed': wristSpeed,
+            'club_head_speed': clubHeadSpeed,
+            'hip_rotation': 0,
+            'start_end_rotation': 0,
+            'hip_wrist_lag': 0,
+            'back_posture': 0,
+            'date': FieldValue.serverTimestamp(),
+      });
+
+
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Swing $newSwingNumber added under "$fullClubName/$currentDate"!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save swing: $e')),
+      );
+    }
+  }
 
   // Start capturing raw packets from the target characteristic
   Future<void> _startPacketCapture() async {
@@ -105,6 +186,7 @@ class _SwingPageState extends State<SwingPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Stopped capturing packets. Found ${parsedMap.length} rows.")),
     );
+    _saveSelectedClub();
   }
 
   @override
@@ -190,6 +272,27 @@ class _SwingPageState extends State<SwingPage> {
                       value: _swingMetrics!["clubheadSpeed_mph"].toStringAsFixed(2)),
                 ],
               ),
+            const SizedBox(height: 16),
+
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: clubMapping.keys.map((club) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: ChoiceChip(
+                        label: Text(club, style: GoogleFonts.tomorrow(color: Colors.white)),
+                        selected: selectedClub == club,
+                        onSelected: (isSelected) {
+                          setState(() {
+                            selectedClub = club;
+                          });
+                        },
+                        backgroundColor: Colors.grey[700],
+                        selectedColor: Color(0xFFD8A42D),
+                      ),
+                    )).toList(),
+              ),
+            ),
             const SizedBox(height: 16),
             // A sliver-like area to scroll through parsed packet rows (table)
             Expanded(
