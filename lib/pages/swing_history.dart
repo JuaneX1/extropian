@@ -162,7 +162,7 @@ class _ClubSessionsScreenState extends State<ClubSessionsScreen> {
     }
 
     // Sort the sessions by date in descending order
-    final dateFormat = DateFormat("MMMM d, yyyy h:mm a");
+    final dateFormat = DateFormat("MMMM d, yyyy");
     fetchedSessions.sort((a, b) {
       final dateA = dateFormat.parse(a['date']);
       final dateB = dateFormat.parse(b['date']);
